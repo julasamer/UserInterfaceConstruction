@@ -1,51 +1,28 @@
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class HomeAutomationCli {
 	public final List<Location> locations;
 	
-	public List<Set<String>> synonyms;
-	public Set<String> ignoredWords;
+	public final Thesaurus thesaurus;
+	public final Scheduler scheduler = new Scheduler();
 	
-	public HomeAutomationCli(List<Location> locations, List<Set<String>> synonyms) {
+	private int babbelCount = 0;
+	
+	public HomeAutomationCli(List<Location> locations, Thesaurus thesaurus) {
 		this.locations = locations;
-		this.synonyms = synonyms;
-	}
-	
-	public boolean matchWithSynonyms(String command, String word) {
-		if (command.contains(word)) return true;
-		
-		for (Set<String> synonyms : this.synonyms) {
-			if (synonyms.contains(word)) {
-				for (String synonym : synonyms) {
-					if (command.matches(".*"+synonym+".*")) {
-						return true;
-					}
-				}
-			}
-		}
-		
-		return false;
+		this.thesaurus = thesaurus;
 	}
 	
 	public List<Location> extractLocation(String command) {
 		ArrayList<Location> result = new ArrayList<Location>();
 		
 		for (Location location : this.locations) {
-			if (matchWithSynonyms(command, location.name)) {
+			if (thesaurus.matchWithSynonyms(command, location.name)) {
 				result.add(location);
 			}
-		}
-		
-		if (result.size() == 0) {
-			result = new ArrayList<Location>(this.locations);
 		}
 				
 		return result;
@@ -55,9 +32,16 @@ public class HomeAutomationCli {
 		List<Location> locations = extractLocation(command);
 		HashMap<Location, ArrayList<Device>> result = new HashMap<Location, ArrayList<Device>>();
 		
-		for (Location location : locations) {
+		List<Location> deviceLookupLocations = locations;
+		boolean shouldAddAllDevices = true;
+		if (locations.size() == 0) {
+			deviceLookupLocations = this.locations;
+			shouldAddAllDevices = false;
+		}
+		
+		for (Location location : deviceLookupLocations) {
 			for (Device device : location.devices) {
-				if (matchWithSynonyms(command, device.name)) {
+				if (this.thesaurus.matchWithSynonyms(command, device.name)) {
 					ArrayList<Device> devices = result.get(location);
 					
 					if (devices == null) {
@@ -68,73 +52,19 @@ public class HomeAutomationCli {
 					devices.add(device);
 				}
 			}
+			
+			if (result.get(location) == null && shouldAddAllDevices) {
+				result.put(location, (ArrayList<Device>) location.devices);
+			}
 		}
 		
-		if (result.values().size() == 0) {
-			for (Location location : locations) {
+		if (result.size() == 0 && this.thesaurus.matchWithSynonyms(command, "everything")) {
+			for (Location location : this.locations) {
 				result.put(location, new ArrayList<Device>(location.devices));
 			}
 		}
 		
 		return result;
-	}
-	
-	public Date extractAbsoluteDate(String command) {
-		Pattern pattern = Pattern.compile("at\\s(\\d?\\d):(\\d\\d)");
-	    Matcher matcher = pattern.matcher(command);
-	    
-	    while (matcher.find()) {	    	
-	    	String hours = command.substring(matcher.start(1), matcher.end(1));
-	    	String minutes = command.substring(matcher.start(2), matcher.end(2));
-	    		    	
-	    	int h = Integer.parseInt(hours);
-	    	int min = Integer.parseInt(minutes);
-	    	
-	    	Date now = new Date();
-	    	Calendar calendar = Calendar.getInstance();
-	    	calendar.setTime(now);
-	    	calendar.set(Calendar.HOUR, h);
-	    	calendar.set(Calendar.MINUTE, min);
-	    	calendar.set(Calendar.SECOND, 0);
-	    	
-	    	if (calendar.getTime().before(now)) {
-	    		calendar.add(Calendar.DATE, 1);
-	    	}
-	    	
-	    	return calendar.getTime();
-	    }
-	    
-	    return null;
-	}
-	
-	public Date extractRelativeDate(String command) {
-		Pattern pattern = Pattern.compile("in\\s(\\d+)\\s?min");
-	    Matcher matcher = pattern.matcher(command);
-	    
-	    while (matcher.find()) {
-	    	String minutes = command.substring(matcher.start(1), matcher.end(1));
-	    		    	
-	    	int min = Integer.parseInt(minutes);
-	    	
-	    	Date now = new Date();
-	    	Calendar calendar = Calendar.getInstance();
-	    	calendar.setTime(now);
-	    	calendar.add(Calendar.MINUTE, min);
-	    	
-	    	return calendar.getTime();
-	    }
-    
-	    return null;
-	}
-	
-	public Date extractDate(String command) {
-		Date absoluteDate = extractAbsoluteDate(command);
-		if (absoluteDate != null) return absoluteDate;
-		
-		Date relativeDate = extractRelativeDate(command);
-		if (relativeDate != null) return relativeDate;
- 
-		return null;
 	}
 	
 	public IAction extractHelpAction(String command) {
@@ -169,49 +99,49 @@ public class HomeAutomationCli {
 		
 		ArrayList<IAction> actions = new ArrayList<IAction>();
 		
-		// Turn on/off:
 		for (Location location : devicesByLocation.keySet()) {
 			ArrayList<Device> devices = devicesByLocation.get(location);
 			
 			for (Device device : devices) {
-				IAction action = device.parseAction(command, location);
+				IAction action = device.parseAction(command, location, this.thesaurus);
 				
 				if (action != null) actions.add(action);
 			}
 		}
 		
 		if (actions.size() == 0) {
+			actions.add(new Action.PrintHelpAction());
+			/*
 			for (Location location : devicesByLocation.keySet()) {
 				ArrayList<Device> devices = devicesByLocation.get(location);
 				
 				for (Device device : devices) {					
 					actions.add(device.getDefaultAction(location));
 				}
-			}
+			}*/
 		}
+		IAction action = null;
+		if (actions.size() == 1) action = actions.get(0);
+		else action = new Action.MultiAction(actions);
 		
-		IAction action = new Action.MultiAction(actions);
-		
-		Date date = this.extractDate(command);
-		if (date != null) {
-			action = new Timer(date, action);
-		}
-		
-		// TODO: create timer action if there is a date in the description
+		action = this.scheduler.parseCommand(command, action);
 		
 		return action;
 	}
 	
 	public String executeCommand(String command) {
-		/**
-		 * Notes:
-		 * 
-		 * Problem: "turn on lights in sauna" will turn on the oven in the sauna
-		 * */
-		
 		command = command.toLowerCase();
 		IAction action = this.extractAction(command);
 		
+		if (action instanceof Action.PrintHelpAction) {
+			babbelCount++;
+
+			if (babbelCount == 4) return "Come on, this isn't so hard.";
+			if (babbelCount == 5) return "Can you "+command+"? I can't "+command;
+			if (babbelCount == 6) return "LALALALALALA I can't hear you LALALALALA";
+		} else {
+			babbelCount = 0;
+		}
 		action.execute();
 		
 		return action.toString(Tense.Past);

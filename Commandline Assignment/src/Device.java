@@ -20,16 +20,16 @@ public class Device {
 		return new Action.GetStateAction(this, location);
 	}
 	
-	public IAction parseAction(String command, Location location) {
-		if (command.contains("turn on")) {
+	public IAction parseAction(String command, Location location, Thesaurus thesaurus) {
+		if (thesaurus.matchWithSynonyms(command, "turn on")) {
 			return new Action.TriggerAction(this, location, true);
 		}
 		
-		if (command.contains("turn off")) {
+		if (thesaurus.matchWithSynonyms(command, "turn off")) {
 			return new Action.TriggerAction(this, location, false);
 		}
 		
-		if (command.contains("state")) {
+		if (thesaurus.matchWithSynonyms(command, "state")) {
 			return new Action.GetStateAction(this, location);
 		}
 		

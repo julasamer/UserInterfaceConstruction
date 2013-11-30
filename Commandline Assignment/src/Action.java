@@ -75,10 +75,11 @@ public abstract class Action implements IAction {
 					+ "\tturn off\n"
 					+ "\tlock\n"
 					+ "\tunlock\n"
-					+ "to control devices.\n"
-					+ "To learn about scheduling commands, write \"help scheduling\"."
+					+ "to control devices. Use \"all\" to apply the command to all devices.\n"
+					+ "Write state (+device name or location) to get information about their states.\n"
+					+ "To learn about scheduling commands, write \"help scheduling\".\n"
 					+ "Send \"help\" + command name for additional help.\n"
-					+ "Send \"list devices\" to list all devices.";
+					+ "Send \"list devices\" to list all devices.\n";
 		}
 	}
 	
@@ -89,9 +90,9 @@ public abstract class Action implements IAction {
 			return "Turning on/off things\n"
 					+ "To control the state of a device, use turn on/off and the device name or a location, for example:\n"
 					+ "turn on lights - turns on all the lights\n"
-					+ "turn on lights in bathroom - turns on the lights in the bathroom only"
-					+ "turn off sauna - turns off all devices in the sauna (ie. the oven)"
-					+ "Send \"list devices\" to list all devices.";
+					+ "turn on lights in bathroom - turns on the lights in the bathroom only\n"
+					+ "turn off sauna - turns off all devices in the sauna (ie. the oven)\n"
+					+ "Send \"list devices\" to list all devices.\n";
 		}
 	}
 	
@@ -114,7 +115,7 @@ public abstract class Action implements IAction {
 					+ "To schedule a command, write the command followed by \"in m min\" or \"at hh:mm\". Eg.:\n"
 					+ "lock the door at 20:00 - locks the door at 20:00.\n"
 					+ "turn off the stereo in 15min - turns off the stereo in a quarter hour.\n"
-					+ "To cancel a task, write \"cancel\" + the tasks number."
+					+ "To cancel a task, write \"cancel\" + the tasks number.\n"
 					+ "Write \"list tasks\" to list all currently active tasks and their numbers.\n";
 		}
 	}

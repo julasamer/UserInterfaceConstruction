@@ -58,10 +58,14 @@ public class CommandLineInterfaceTest {
 		Location hallway = new Location("hallway", stuff);
 		
 		Set<String> lightSynonyms = CreateSet("lights", "lamps");
+		Set<String> turnOffSynonyms = CreateSet("turn off", "disable", "switch off");
+		Set<String> turnOnSynonyms = CreateSet("turn on", "enable", "switch on", "shut down");
+		Set<String> stateSynonyms = CreateSet("state", "are", "whats", "what");
+		Set<String> everythingSynonyms = CreateSet("everything", "all", "any", "universe");
 		
-		List<Set<String>> synonyms = CreateList(lightSynonyms);
+		List<Set<String>> synonyms = CreateList(lightSynonyms, turnOffSynonyms, turnOnSynonyms, stateSynonyms, everythingSynonyms);
 		
-		this.cli = new HomeAutomationCli(CreateList(kitchen, livingRoom, sauna, bathroom, hallway), synonyms);
+		this.cli = new HomeAutomationCli(CreateList(kitchen, livingRoom, sauna, bathroom, hallway), new Thesaurus(synonyms));
 		
 		this.start();
 	}
