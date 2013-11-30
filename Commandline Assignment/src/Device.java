@@ -1,15 +1,11 @@
-import java.util.Set;
-
 public class Device {
 	public final String name;
-	public final Set<Action.ActionType> supportedActions;
 	
 	private boolean enabled;
 	
-	public Device(String name, boolean enabled, Set<Action.ActionType> supportedActions) {
+	public Device(String name, boolean enabled) {
 		this.name = name;
 		this.enabled = enabled;
-		this.supportedActions = supportedActions;
 	}
 	
 	public void setEnabled(boolean enabled) {
@@ -20,19 +16,23 @@ public class Device {
 		return this.enabled;
 	}
 	
-	public Action.ActionType parseActionType(String command, Location location) {
+	public IAction getDefaultAction(Location location) {
+		return new Action.GetStateAction(this, location);
+	}
+	
+	public IAction parseAction(String command, Location location) {
 		if (command.contains("turn on")) {
-			return Action.ActionType.TriggerOn;
+			return new Action.TriggerAction(this, location, true);
 		}
 		
 		if (command.contains("turn off")) {
-			return Action.ActionType.TriggerOff;
+			return new Action.TriggerAction(this, location, false);
 		}
 		
 		if (command.contains("state")) {
-			return Action.ActionType.State;
+			return new Action.GetStateAction(this, location);
 		}
 		
-		return Action.ActionType.Unknown;
+		return null;
 	}
 }

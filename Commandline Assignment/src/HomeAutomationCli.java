@@ -137,29 +137,60 @@ public class HomeAutomationCli {
 		return null;
 	}
 	
-	public Action extractAction(String command) {
+	public IAction extractHelpAction(String command) {
+		if (command.contains("help turn on") || command.contains("help turn off")) {
+			return new Action.PrintTurnOnOffHelp();
+		}
+		
+		if (command.contains("help lock") || command.contains("help unlock")) {
+			return new Action.PrintLockHelp();
+		}
+		
+		if (command.contains("help scheduling")) {
+			return new Action.PrintSchedulingHelp();
+		}
+		
+		if (command.contains("help")) {
+			return new Action.PrintHelpAction();
+		}
+		
+		if (command.contains("list devices")) {
+			return new Action.PrintDevices(this.locations);
+		}
+		
+		return null;
+	}
+	
+	public IAction extractAction(String command) {
+		IAction helpAction = this.extractHelpAction(command);
+		if (helpAction != null) return helpAction;
+		
 		Map<Location, ArrayList<Device>> devicesByLocation = extractDevices(command);
-				
-		Action.ActionType type = Action.ActionType.Unknown;
+		
+		ArrayList<IAction> actions = new ArrayList<IAction>();
 		
 		// Turn on/off:
 		for (Location location : devicesByLocation.keySet()) {
 			ArrayList<Device> devices = devicesByLocation.get(location);
 			
 			for (Device device : devices) {
-				Action.ActionType parsedType = device.parseActionType(command, location);
+				IAction action = device.parseAction(command, location);
 				
-				if (parsedType == Action.ActionType.Unknown) throw new IllegalStateException("Unknown action.");
+				if (action != null) actions.add(action);
+			}
+		}
+		
+		if (actions.size() == 0) {
+			for (Location location : devicesByLocation.keySet()) {
+				ArrayList<Device> devices = devicesByLocation.get(location);
 				
-				if (type == Action.ActionType.Unknown) {
-					type = parsedType;
-				} else {
-					if (type != parsedType) throw new IllegalStateException("Action types do not match.");
+				for (Device device : devices) {					
+					actions.add(device.getDefaultAction(location));
 				}
 			}
 		}
 		
-		Action action = Action.createAction(devicesByLocation, type);
+		IAction action = new Action.MultiAction(actions);
 		
 		Date date = this.extractDate(command);
 		if (date != null) {
@@ -172,10 +203,17 @@ public class HomeAutomationCli {
 	}
 	
 	public String executeCommand(String command) {
-		Action action = this.extractAction(command);
+		/**
+		 * Notes:
+		 * 
+		 * Problem: "turn on lights in sauna" will turn on the oven in the sauna
+		 * */
+		
+		command = command.toLowerCase();
+		IAction action = this.extractAction(command);
 		
 		action.execute();
 		
-		return action.toString();
+		return action.toString(Tense.Past);
 	}
 }

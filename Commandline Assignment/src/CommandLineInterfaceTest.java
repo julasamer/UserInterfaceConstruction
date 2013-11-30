@@ -35,30 +35,27 @@ public class CommandLineInterfaceTest {
 	public final HomeAutomationCli cli;
 	
 	public CommandLineInterfaceTest() {
-		HashSet<Action.ActionType> defaultActions = new HashSet<Action.ActionType>();
-		defaultActions.add(Action.ActionType.TriggerOn);
-		defaultActions.add(Action.ActionType.TriggerOff);
-		defaultActions.add(Action.ActionType.State);
 		
 		Location kitchen = new Location("kitchen", CreateList(
-				new Device("oven", true, defaultActions), 
-				new Device("lights", true, defaultActions), 
-				new Device("refrigerator", true, defaultActions), 
-				new Device("fire alarm", true, defaultActions)));
+				new Device("oven", true), 
+				new Device("lights", true), 
+				new Device("refrigerator", true), 
+				new Device("fire alarm", true)));
 		
 		Location livingRoom = new Location("living room", CreateList(
-				new Device("tv", true, defaultActions),
-				new Device("lights", true, defaultActions),
-				new Device("stereo", false, defaultActions)));
+				new Device("tv", true),
+				new Device("lights", true),
+				new Device("stereo", false)));
 		
-		Location sauna = new Location("sauna", CreateList(new Device("oven", false, defaultActions)));
+		Location sauna = new Location("sauna", CreateList(new Device("oven", false)));
 		
 		Location bathroom = new Location("bathroom", CreateList(
-				new Device("washing machine", true, defaultActions), 
-				new Device("tumble dryer", true, defaultActions),
-				new Device("lights", true, defaultActions)));
+				new Device("washing machine", true), 
+				new Device("tumble dryer", true),
+				new Device("lights", true)));
 		
-		Location hallway = new Location("hallway", CreateList(new Device("door", true, defaultActions)));
+		List<Device> stuff = CreateList((Device)new Door("door", true));
+		Location hallway = new Location("hallway", stuff);
 		
 		Set<String> lightSynonyms = CreateSet("lights", "lamps");
 		
