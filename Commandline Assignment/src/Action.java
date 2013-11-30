@@ -116,7 +116,7 @@ public abstract class Action implements IAction {
 					+ "lock the door at 20:00 - locks the door at 20:00.\n"
 					+ "turn off the stereo in 15min - turns off the stereo in a quarter hour.\n"
 					+ "To cancel a task, write \"cancel\" + the tasks number.\n"
-					+ "Write \"list tasks\" to list all currently active tasks and their numbers.\n";
+					+ "Write \"list timers\" to list all currently active tasks and their numbers.\n";
 		}
 	}
 
