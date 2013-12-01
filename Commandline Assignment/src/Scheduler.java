@@ -88,7 +88,7 @@ public class Scheduler {
 	}
 	
 	public IAction parseCommand(String command, IAction parsedAction) {
-		Pattern pattern = Pattern.compile("cancel timer (\\d+)");
+		Pattern pattern = Pattern.compile("cancel.*(\\d+)");
 	    Matcher matcher = pattern.matcher(command);
 	    
 	    while (matcher.find()) {
